@@ -1,6 +1,6 @@
 // backend/src/controllers/authController.js
 import User from "../models/user.js";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 // Helper to create JWT cookie
