@@ -34,13 +34,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-  try {
-    await api.post("/auth/logout", {}, { withCredentials: true }); // ensure cookie is cleared
-    setUser(null); // clear user state in frontend
-  } catch (err) {
-    console.error("Logout error:", err);
-  }
-};
+    await api.post("/auth/logout");
+    setUser(null);
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout }}>
