@@ -1,18 +1,19 @@
 import Note from "../models/Note.js";
 
-export async function getAllNotes(_, res) {
+// ✅ Get all notes of logged-in user
+export async function getAllNotes(req, res) {
   try {
-    const notes = await Note.find().sort({ createdAt: -1 }); // -1 will sort in desc. order (newest first)
-    res.status(200).json(notes);
-  } catch (error) {
-    console.error("Error in getAllNotes controller", error);
-    res.status(500).json({ message: "Internal server error" });
+    const notes = await Note.find({ user: req.user._id });
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 }
 
+// ✅ Get single note (only if it belongs to logged-in user)
 export async function getNoteById(req, res) {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findOne({ _id: req.params.id, user: req.user._id });
     if (!note) return res.status(404).json({ message: "Note not found!" });
     res.json(note);
   } catch (error) {
@@ -21,28 +22,29 @@ export async function getNoteById(req, res) {
   }
 }
 
-export async function createNote(req, res) {
+// ✅ Create new note linked to logged-in user
+export const createNote = async (req, res) => {
   try {
-    const { title, content } = req.body;
-    const note = new Note({ title, content });
-
-    const savedNote = await note.save();
-    res.status(201).json(savedNote);
-  } catch (error) {
-    console.error("Error in createNote controller", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.log("Creating note for user:", req.user); // 👈 Debug log
+    const note = await Note.create({
+      title: req.body.title,
+      content: req.body.content,
+      user: req.user._id,
+    });
+    res.status(201).json(note);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
-}
+};
 
+// ✅ Update note only if it belongs to the user
 export async function updateNote(req, res) {
   try {
     const { title, content } = req.body;
-    const updatedNote = await Note.findByIdAndUpdate(
-      req.params.id,
+    const updatedNote = await Note.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id }, // ownership check
       { title, content },
-      {
-        new: true,
-      }
+      { new: true }
     );
 
     if (!updatedNote) return res.status(404).json({ message: "Note not found" });
@@ -54,9 +56,13 @@ export async function updateNote(req, res) {
   }
 }
 
+// ✅ Delete note only if it belongs to the user
 export async function deleteNote(req, res) {
   try {
-    const deletedNote = await Note.findByIdAndDelete(req.params.id);
+    const deletedNote = await Note.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id,
+    });
     if (!deletedNote) return res.status(404).json({ message: "Note not found" });
     res.status(200).json({ message: "Note deleted successfully!" });
   } catch (error) {

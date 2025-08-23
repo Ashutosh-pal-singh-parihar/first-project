@@ -1,4 +1,5 @@
 import express from "express";
+import auth from "../middleware/auth.js"
 import {
   createNote,
   deleteNote,
@@ -9,10 +10,10 @@ import {
 
 const router = express.Router();
 
-router.get("/", getAllNotes);
-router.get("/:id", getNoteById);
-router.post("/", createNote);
-router.put("/:id", updateNote);
-router.delete("/:id", deleteNote);
+router.post("/", auth, createNote);
+router.get("/", auth, getAllNotes);
+router.get("/:id", auth, getNoteById);
+router.put("/:id", auth, updateNote);
+router.delete("/:id", auth, deleteNote);
 
 export default router;
