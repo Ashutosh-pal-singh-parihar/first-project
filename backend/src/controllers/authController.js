@@ -45,18 +45,37 @@ export const register = async (req, res) => {
 };
 
 // ------------------- LOGIN -------------------
+
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    console.log("Request body:", req.body); // 👈
+    // Destructure body safely
+    const { email, password } = req.body || {};
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+    // Check if email and password are provided
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
 
+    // Find user by email
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid email" });
+    }
+
+    // Compare password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    // Create JWT token
     const token = createToken(user._id);
 
+    // Set token in HttpOnly cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -64,6 +83,7 @@ export const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
+    // Respond with user data (without password)
     res.status(200).json({
       user: { _id: user._id, username: user.username, email: user.email },
     });
@@ -72,6 +92,7 @@ export const login = async (req, res) => {
     res.status(500).json({ error: "Server error during login" });
   }
 };
+
 
 // ------------------- LOGOUT -------------------
 export const logout = async (req, res) => {

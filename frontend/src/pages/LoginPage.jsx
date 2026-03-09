@@ -22,7 +22,8 @@ const LoginPage = () => {
 
     setLoading(true);
     try {
-      await login(email, password); // context login
+      const cleanEmail = email.trim().toLowerCase();
+      await login(cleanEmail, password); // context login
       toast.success("Logged in successfully!");
       navigate("/");
     } catch (error) {
